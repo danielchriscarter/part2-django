@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'files'
 ]
 
 MIDDLEWARE = [
@@ -77,7 +78,18 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    'data': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'test',
+        'USER': 'django',
+#        'PASSWORD': 'djangotest',
+        'HOST': 'krb.local',
+        'PORT': '5432',
+#        'OPTIONS': {
+#            'krbsrvname': 'postgres',
+#        },
+    },
 }
 
 
