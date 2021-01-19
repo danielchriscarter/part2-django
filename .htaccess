@@ -1,0 +1,9 @@
+AuthType GSSAPI
+AuthName "Kerberos site authentication"
+GssapiUseS4U2Proxy On
+GssapiCredStore keytab:/var/www/apache.keytab
+GssapiCredStore client_keytab:/var/www/apache.keytab
+GssapiImpersonate On
+GssapiDelegCcacheDir /var/run/httpd/clientcaches
+#GssapiDelegCcacheUnique On
+Require valid-user
