@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+	<head>
+		<title>File browser</title>
+	<script type="text/javascript">
+		function toggleArea(area) {
+			var block = document.getElementById(area);
+			if (block.style.display === "none") {
+				block.style.display = "block";
+			} else {
+				block.style.display = "none";
+			}
+		}
+	</script>
+	</head>
+	<body>
+		<h1>File browser</h1>
+		<p>You are logged in as {{user}}</p>
+		<ul>
+			{% include "files/listing.html" %}
+		</ul>
+	</body>
+</html>

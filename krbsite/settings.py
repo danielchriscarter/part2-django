@@ -25,7 +25,7 @@ SECRET_KEY = '7a=!4*cz5blnjib292wty8c0nl2j-=pa8z(@@=!^*x%&_-^xq1'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.56.102'] # TODO: add a pseudo-domain name here
+ALLOWED_HOSTS = ['krbsite.local']
 
 
 # Application definition
@@ -82,16 +82,16 @@ DATABASES = {
     'data': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'test',
-        'USER': 'django',
-#        'PASSWORD': 'djangotest',
+#        'USER': 'django',
         'HOST': 'krb.local',
         'PORT': '5432',
-#        'OPTIONS': {
-#            'krbsrvname': 'postgres',
-#        },
+        'OPTIONS': {
+            'ccache_name': '/var/run/apache2/clientcaches/dcc@LOCAL',
+        },
     },
 }
 
+DATABASE_ROUTERS = ['krbsite.filedb_router.FileDBRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

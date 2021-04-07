@@ -1,0 +1,17 @@
+<li><a href="javascript:toggleArea('dir_{{root_id}}')"><strong>{{ root_name }}</strong></a></li>
+<div id="dir_{{root_id}}" style="display:none">
+<ul>
+{% for d in directories %}
+{% if d.parent != None and d.parent.id == root_id %}
+	{% include "files/listing.html" with root_id=d.id root_name=d.name %}
+{% endif %}
+{% endfor %}
+{% for f in files %}
+{% if f.directory.id == root_id %}
+	<li> <a href="javascript:toggleArea('file_{{f.id}}')">{{ f.name }} </a>
+		<div id="file_{{f.id}}" style="display:none">{{f.contents}}</div>
+	</li>
+{% endif %}
+{% endfor %}
+</ul>
+</div>

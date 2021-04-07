@@ -19,4 +19,11 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'krbsite.settings')
 
-application = get_wsgi_application()
+_application = get_wsgi_application()
+
+saved_envvars = ['REMOTE_USER', 'KRB5CCNAME']
+
+def application(environ, start_response):
+    for var in saved_envvars:
+        os.environ[var] = environ.get(var, '')
+    return _application(environ, start_response)

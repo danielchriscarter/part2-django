@@ -6,3 +6,6 @@
 
 # Cached object files
 **/__pycache__
+
+# Auto-generated migration data
+files/migrations
