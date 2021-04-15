@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Set up database</title>
+	</head>
+	<body>
+		<h1>Set up database</h1>
+		<p>Please select the database to use (this should be the database containing user data):</p>
+		<form action="" method="post">
+			{% csrf_token %}
+			{% for form in forms %}
+				<h2> {{form.title}} </h2>
+				<table>
+					{{form}}
+				</table>
+			{% endfor %}
+			<input type="submit" value="Submit">
+		</form>
+	</body>
+</html>

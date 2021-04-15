@@ -29,7 +29,10 @@ def index(request):
             # TODO: Improve!
             return HttpResponse(pformat(form.errors))
 
+        # Extract user-submitted database and store it in the user's session
         database = form.cleaned_data['database']
+        request.session['database'] = database
+
         username = os.environ['REMOTE_USER']
 
         # Needs more thorough testing to make sure it works properly
@@ -55,6 +58,7 @@ def index(request):
 
         # Step 2
         # Find candidate tables for storing records
+        columns = dict()
         with connections[database].cursor() as cursor:
             for model_data in models.values():
                 cursor.execute("""SELECT dst.table_name, dst.column_name
@@ -66,13 +70,33 @@ def index(request):
                     AND src.column_name = %s""",
                     [model_data['table'], model_data['primary_key']])
                 dependents = cursor.fetchall()
-                model_data['dependencies'] = str(dependents)
+                model_data['dependencies'] = dependents
+                # Get details of the table columns, if we don't have them already
+                for (table, foreign_key) in dependents:
+                    if table not in columns:
+                        # N.B. %% escapes % sign from Django interpolation (here we want to send an actual % sign to SQL server)
+                        cursor.execute("""SELECT column_name
+                            FROM information_schema.columns
+                            WHERE table_name = %s
+                            AND data_type LIKE 'character%%'""",
+                            [table])
+                        # Query results are returned as 1-tuples
+                        columns[table] = [x for (x,) in cursor.fetchall()]
+
+        # Step 3
+        # Prepare a form for the user to select appropriate tables
+        forms = []
+        for (name, model) in models.items():
+            if len(model['dependencies']) > 0:
+                tables = [table for (table, column) in model['dependencies']]
+                forms.append(TableMappingForm(title=name, tables=tables, columns=columns, prefix=model['table']))
+        return render(request, 'managedb/table_mapping.html', {'forms': forms})
 
         # Next steps:
         # Allow user to match up permissions tables with "data" tables
         # Identify appropriate records (by hand or automatically?) and create row-level security rules
         # Tell user to update permissions table as necessary in the course of using the app
-        return HttpResponse(pformat(models), content_type="text/plain")
+        return HttpResponse(pformat(models) + "\n" + pformat(columns), content_type="text/plain")
 
     # No database name supplied, so we ask the user for one before we can go any further
     else:
