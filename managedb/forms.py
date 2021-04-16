@@ -13,16 +13,16 @@ class SelectDBForm(forms.Form):
         self.fields['database'] = forms.ChoiceField(choices=db_choices)
 
 class TableMappingForm(forms.Form):
+    # TODO: resolve "required" status where dependent on other fields
     include = forms.BooleanField(required=False)
-    #table = forms.ChoiceField()
-    #column = forms.ChoiceField()
+    table = forms.ChoiceField(required=True)
+    column = forms.ChoiceField(required=True,
+            widget=forms.Select(attrs={'class' : 'colselect'}))
     def __init__(self, *args, **kwargs):
         self.title = kwargs.pop('title', ())
         tables = kwargs.pop('tables', ())
-        columns = kwargs.pop('columns', ())
         super().__init__(*args, **kwargs)
-        table_choices = [(x,x) for x in tables]
-        column_choices = [(x,x) for x in columns]
-        self.fields['table'] = forms.ChoiceField(choices=table_choices)
-        # This doesn't work yet - need to populate it properly
-        self.fields['column'] = forms.ChoiceField(choices=column_choices)
+        table_choices = [('', '')] + [(x,x) for x in tables]
+        self.fields['table'] = forms.ChoiceField(choices=table_choices,
+                widget=forms.Select(attrs={'onchange' : 'update(this.id);'}))
+        # Column selection field is populated in JavaScript

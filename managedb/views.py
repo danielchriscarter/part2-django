@@ -89,8 +89,8 @@ def index(request):
         for (name, model) in models.items():
             if len(model['dependencies']) > 0:
                 tables = [table for (table, column) in model['dependencies']]
-                forms.append(TableMappingForm(title=name, tables=tables, columns=columns, prefix=model['table']))
-        return render(request, 'managedb/table_mapping.html', {'forms': forms})
+                forms.append(TableMappingForm(title=name, tables=tables, prefix=model['table']))
+        return render(request, 'managedb/table_mapping.html', {'forms': forms, 'columns' : columns})
 
         # Next steps:
         # Allow user to match up permissions tables with "data" tables

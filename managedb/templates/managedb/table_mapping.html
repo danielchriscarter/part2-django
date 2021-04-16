@@ -2,17 +2,44 @@
 <html>
 	<head>
 		<title>Set up database</title>
+		{{ columns | json_script:"columns" }}
+		<script type="text/javascript">
+			const columns = JSON.parse(document.getElementById('columns').textContent);
+			function update(id) {
+				let dbSelect = document.getElementById(id);
+				// Doesn't work with Internet Explorer!
+				let formset = dbSelect.closest('.dbform');
+				let colSelect = formset.querySelector(".colselect");
+
+				for (i = 0; i < colSelect.length; i++) {
+					colSelect.remove(0);
+				}
+
+				let tableName = dbSelect.value;
+				if (tableName in columns) {
+					let cols = columns[tableName];
+
+					for (i = 0; i < cols.length; i++) {
+						let option = document.createElement('option');
+						option.text = cols[i];
+						colSelect.add(option, null);
+					}
+				}
+			}
+		</script>
 	</head>
 	<body>
-		<h1>Set up database</h1>
-		<p>Please select the database to use (this should be the database containing user data):</p>
+		<h1>Set up database: Step 2</h1>
+		<p>Please select the tables which you wish to use for storing user permissions:</p>
 		<form action="" method="post">
 			{% csrf_token %}
 			{% for form in forms %}
-				<h2> {{form.title}} </h2>
-				<table>
-					{{form}}
-				</table>
+				<fieldset class="dbform">
+					<h2> {{form.title}} </h2>
+					<table>
+						{{form}}
+					</table>
+				</fieldset>
 			{% endfor %}
 			<input type="submit" value="Submit">
 		</form>
