@@ -69,10 +69,12 @@ def index(request):
                     AND src.table_name = %s
                     AND src.column_name = %s""",
                     [model_data['table'], model_data['primary_key']])
-                dependents = cursor.fetchall()
-                model_data['dependencies'] = dependents
+                dependents = dict()
+                for (table, foreign_key in cursor.fetchall()):
                 # Get details of the table columns, if we don't have them already
-                for (table, foreign_key) in dependents:
+                # Note: this doesn't work reliably with tables where the same foreign key appears in more than one column
+                for (table, foreign_key) in dependents.items():
+                    dependents[table] = foreign_key
                     if table not in columns:
                         # N.B. %% escapes % sign from Django interpolation (here we want to send an actual % sign to SQL server)
                         cursor.execute("""SELECT column_name
@@ -82,21 +84,20 @@ def index(request):
                             [table])
                         # Query results are returned as 1-tuples
                         columns[table] = [x for (x,) in cursor.fetchall()]
+                # Save out dependency data
+                model_data['dependencies'] = dependents
+        # Save this data into the session for later verification
+        request.session['models'] = models
+        request.session['columns'] = columns
 
         # Step 3
         # Prepare a form for the user to select appropriate tables
         forms = []
         for (name, model) in models.items():
             if len(model['dependencies']) > 0:
-                tables = [table for (table, column) in model['dependencies']]
-                forms.append(TableMappingForm(title=name, tables=tables, prefix=model['table']))
+                tables = model['dependencies'].keys()
+                forms.append(TableMappingForm(title=name, tables=tables, columns=columns, prefix=name))
         return render(request, 'managedb/table_mapping.html', {'forms': forms, 'columns' : columns})
-
-        # Next steps:
-        # Allow user to match up permissions tables with "data" tables
-        # Identify appropriate records (by hand or automatically?) and create row-level security rules
-        # Tell user to update permissions table as necessary in the course of using the app
-        return HttpResponse(pformat(models) + "\n" + pformat(columns), content_type="text/plain")
 
     # No database name supplied, so we ask the user for one before we can go any further
     else:
@@ -104,4 +105,38 @@ def index(request):
         return render(request, 'managedb/index.html', {'form': form})
 
 def setup(request):
-    return HttpResponse('')
+    if request.method == 'POST':
+        models = request.session['models']
+        columns = request.session['columns']
+        form_data = dict()
+
+        for (name, model) in models.items():
+            if len(model['dependencies']) > 0:
+                tables = model['dependencies'].keys()
+                form = TableMappingForm(request.POST, tables=tables, columns=columns, prefix=name)
+                if form.is_valid():
+                    if form.cleaned_data['include']:
+                        form_data[name] = form.cleaned_data
+                else:
+                    # TODO: Improve!
+                    # N.B. this stops at the first error
+                    return HttpResponse(pformat(form.errors))
+
+        for (model, assignment) in form_data.items():
+            source_table = models[model]['table']
+            source_column = models[model]['primary_key']
+            dest_table = assignment['table']
+            dest_column = models[model]['dependencies'][dest_table]
+            owner_column = assignment['column']
+
+            with connections[database].cursor() as cursor:
+                cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY""",
+                        [source_table])
+                cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
+                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))""",
+                        [source_table, source_table, source_column, dest_column, dest_table, owner_column])
+
+        return HttpResponse(pformat(form_data), content_type='text/plain')
+    else:
+        # Send a proper error here
+        return HttpResponse('No form submitted')

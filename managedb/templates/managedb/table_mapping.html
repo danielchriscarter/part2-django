@@ -31,7 +31,7 @@
 	<body>
 		<h1>Set up database: Step 2</h1>
 		<p>Please select the tables which you wish to use for storing user permissions:</p>
-		<form action="" method="post">
+		<form action="{% url 'setup' %}" method="post">
 			{% csrf_token %}
 			{% for form in forms %}
 				<fieldset class="dbform">
