@@ -70,7 +70,8 @@ def index(request):
                     AND src.column_name = %s""",
                     [model_data['table'], model_data['primary_key']])
                 dependents = dict()
-                for (table, foreign_key in cursor.fetchall()):
+                for (table, foreign_key) in cursor.fetchall():
+                    dependents[table] = foreign_key
                 # Get details of the table columns, if we don't have them already
                 # Note: this doesn't work reliably with tables where the same foreign key appears in more than one column
                 for (table, foreign_key) in dependents.items():
