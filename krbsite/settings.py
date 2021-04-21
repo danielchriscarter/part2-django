@@ -49,6 +49,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'krbsite.middleware.KrbMiddleware'
 ]
 
 ROOT_URLCONF = 'krbsite.urls'
@@ -82,17 +83,18 @@ DATABASES = {
     },
     'data': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'test',
+        'NAME': 'filedb',
+        # Will be filled in by middleware
+        'USER': '',
 #        'USER': 'django',
         'HOST': 'krb.local',
         'PORT': '5432',
-        'OPTIONS': {
-            'ccache_name': '/var/run/apache2/clientcaches/dcc@LOCAL',
-        },
     },
 }
 
 DATABASE_ROUTERS = ['krbsite.filedb_router.FileDBRouter']
+
+DELEG_DATABASE = 'data'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators

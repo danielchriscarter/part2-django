@@ -1,7 +1,9 @@
+from django.conf import settings
+
 class FileDBRouter:
     APP_LABEL = 'files'
 
-    DATA_DB = 'data'
+    DATA_DB = settings.DELEG_DATABASE
     DEFAULT_DB = 'default'
 
     def db_for_read(self, model, **hints):

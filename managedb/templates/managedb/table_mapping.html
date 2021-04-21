@@ -30,6 +30,7 @@
 	</head>
 	<body>
 		<h1>Set up database: Step 2</h1>
+		<p>Applying permissions to the <strong><code>{{database}}</code></strong> database</p>
 		<p>Please select the tables which you wish to use for storing user permissions:</p>
 		<form action="{% url 'setup' %}" method="post">
 			{% csrf_token %}
@@ -43,5 +44,6 @@
 			{% endfor %}
 			<input type="submit" value="Submit">
 		</form>
+		<p>If you do not see any tables above, you may have insufficient permissions to make these changes to the database.</p>
 	</body>
 </html>

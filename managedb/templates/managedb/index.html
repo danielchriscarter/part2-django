@@ -5,11 +5,8 @@
 	</head>
 	<body>
 		<h1>Set up database: Step 1</h1>
-		<p>Please select the database to use (this should be the database containing user data):</p>
-		<form action="" method="post">
-			{% csrf_token %}
-			{{ form }}
-			<input type="submit" value="Submit">
-		</form>
+		<p>This process will set up permissions tables and apply row-level security to the <code>{{database}}</code> database.</p>
+		<p>If this is incorrect, please set the <code>DELEG_DATABASE</code> setting appropriately before continuing.</p>
+		<p>To continue to the next step, please click <a href="{% url 'select' %}">here</a>.</p>
 	</body>
 </html>
