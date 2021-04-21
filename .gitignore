@@ -4,6 +4,9 @@
 # Database
 *.sqlite3
 
+# Secret key
+secret_key
+
 # Cached object files
 **/__pycache__
 
