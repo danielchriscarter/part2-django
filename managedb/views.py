@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.db import connections
 
 #Temporary import
@@ -27,7 +27,7 @@ def index(request):
         form = SelectDBForm(request.POST, databases = connections._settings.keys())
         if not form.is_valid():
             # TODO: Improve!
-            return HttpResponse(pformat(form.errors))
+            return HttpResponseBadRequest(pformat(form.errors))
 
         # Extract user-submitted database and store it in the user's session
         database = form.cleaned_data['database']
@@ -107,9 +107,11 @@ def index(request):
 
 def setup(request):
     if request.method == 'POST':
+        database = request.session['database']
         models = request.session['models']
         columns = request.session['columns']
         form_data = dict()
+        errstring = ''
 
         for (name, model) in models.items():
             if len(model['dependencies']) > 0:
@@ -119,25 +121,39 @@ def setup(request):
                     if form.cleaned_data['include']:
                         form_data[name] = form.cleaned_data
                 else:
-                    # TODO: Improve!
-                    # N.B. this stops at the first error
-                    return HttpResponse(pformat(form.errors))
+                    # Form data had an error in it - log it and go on to the next table
+                    errstring += (pformat(form.errors) + '\n\n')
+                    continue
 
         for (model, assignment) in form_data.items():
             source_table = models[model]['table']
             source_column = models[model]['primary_key']
-            dest_table = assignment['table']
-            dest_column = models[model]['dependencies'][dest_table]
+            perm_table = assignment['table']
+            perm_column = models[model]['dependencies'][perm_table]
             owner_column = assignment['column']
 
             with connections[database].cursor() as cursor:
-                cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY""",
-                        [source_table])
-                cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
-                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))""",
-                        [source_table, source_table, source_column, dest_column, dest_table, owner_column])
+                # Enable row-level security on the relevant table
+                cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY"""
+                        % (source_table))
+                # Only allow users to view and edit files which they have permission to see
+                cursor.execute("""CREATE POLICY %s_view ON %s
+                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
+                        % (source_table, source_table, source_column, perm_column, perm_table, owner_column))
+                # Also enable row-level security on the permissions table
+                cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY"""
+                        % (perm_table))
+                # Only allow users to set permissions where they already have access to that file
+                cursor.execute("""CREATE POLICY %s_view ON %s FOR INSERT
+                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
+                        % (perm_table, perm_table, perm_column, perm_column, perm_table, owner_column))
+                # Special case (to allow for new files) - a file with no current users can have a permission created for it
+                cursor.execute("""CREATE POLICY %s_empty ON %s FOR INSERT
+                USING (%s NOT IN (SELECT %s FROM %s))"""
+                        % (perm_table, perm_table, perm_column, perm_column, perm_table))
 
-        return HttpResponse(pformat(form_data), content_type='text/plain')
+        # Feed the result back to the user
+        return render(request, 'managedb/result.html', {'errors': (len(errstring) > 0), 'errstring': errstring})
     else:
-        # Send a proper error here
-        return HttpResponse('No form submitted')
+        # GET requests to this page are invalid
+        return HttpResponseBadRequest('No form submitted')

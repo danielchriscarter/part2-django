@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Set up database</title>
+	</head>
+	<body>
+		<h1>Set up database: Complete</h1>
+		<p>The database setup has been completed.</p>
+		{% if errors %}
+		<p>The following errors were detected:</p>
+		<code>
+			{{ errstring|escape|linebreaks }}
+		</code>
+		{% endif %}
+	</body>
+</html>
+

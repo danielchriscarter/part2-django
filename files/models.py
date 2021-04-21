@@ -7,22 +7,11 @@ class Directory(models.Model):
     name = models.CharField(max_length=128)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
-class AbstractFile(models.Model):
+class File(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=127)
     directory = models.ForeignKey(Directory, on_delete=models.CASCADE, null=False)
     contents = models.TextField(null=True)
-    class Meta:
-        abstract = True
-
-class File(AbstractFile):
-    pass
-
-class UserFile(AbstractFile):
-    class Meta:
-        managed = False
-        db_table = 'my_files'
-
 
 class Permission(models.Model):
     id = models.AutoField(primary_key=True)

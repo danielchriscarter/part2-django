@@ -17,15 +17,11 @@ def index(request):
     settings.DATABASES['data']['USER'] = username.split('@')[0]
     settings.DATABASES['data']['OPTIONS']['ccache_name'] = os.environ['KRB5CCNAME']
 
-    files = models.UserFile.objects.all()
-    directories = models.Directory.objects.raw("SELECT * FROM my_dirs;")
-    #directories = models.Directory.objects.all()
+    files = models.File.objects.all()
+    #directories = models.Directory.objects.raw("SELECT * FROM my_dirs;")
+    directories = models.Directory.objects.all()
 
     context = {"directories": directories, "files" : files, "root_id" : 0, "root_name" :  directories[0].name, "user" : username}
 
-    # N.B. current setup relies on having SELECT access to directories table
-    # Try and resolve this (and make the whole output setup tidier)
-
-    #return HttpResponse(os.environ['KRB5CCNAME'])
     return render(request, "files/index.html", context)
 
