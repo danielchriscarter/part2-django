@@ -24,7 +24,7 @@ class KrbMiddleware:
 
         # If no problems, set database username for the app to use
         username = os.environ['REMOTE_USER']
-        settings.DATABASES[database]['USER'] = username.split('@')[0]
+        settings.DATABASES[database]['USER'] = username
 
         # Returning None indicates success
         return None

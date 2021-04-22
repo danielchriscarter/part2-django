@@ -1,15 +1,28 @@
+# Enable GSSAPI authentication
 AuthType GSSAPI
 AuthName "Kerberos site authentication"
+
+# Only allow Kerberos authentication (not NTLM etc.)
+GssapiAllowedMech krb5
+
+# Enable delegation support
 GssapiUseS4U2Proxy On
+
+# Specify where keytab file for server principal is located
 GssapiCredStore keytab:/var/www/apache.keytab
 GssapiCredStore client_keytab:/var/www/apache.keytab
-#GssapiDelegCcacheDir KEYRING:test
-#GssapiDelegCcacheDir FILE:/var/run/apache2/clientcaches
+
+# Save delegated tickets to directory, and add random suffix to make them harder to brute-force
 GssapiDelegCcacheDir /var/run/apache2/clientcaches
 GssapiDelegCcacheUnique On
 
+# Strip realm off user name (after Kerberos library has verified it)
+GssapiLocalName On
+
+# Use a session cookie to avoid having to negotiate on each request
 GssapiUseSessions On
 Session On
-SessionCookieName session path=/;httponly;
+SessionCookieName session path=/;httponly;samesite=strict
 
+# Only allow authenticated users to access the application
 Require valid-user
