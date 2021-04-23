@@ -61,7 +61,6 @@ def select(request):
             # Get details of the table columns, if we don't have them already
             # Note: this doesn't work reliably with tables where the same foreign key appears in more than one column
             for (table, foreign_key) in dependents.items():
-                dependents[table] = foreign_key
                 if table not in columns:
                     # N.B. %% escapes % sign from Django interpolation (here we want to send an actual % sign to SQL server)
                     cursor.execute("""SELECT column_name
