@@ -5,9 +5,8 @@
 	{% include "files/listing.html" with root=dir files=subfiles dirs=subdirs %}
 {% endfor %}
 {% for f in files %}
-<li> <a href="{% url 'file' f.id %}">{{ f.name }}</a>
-	<!--<div id="file_{{f.id}}" style="display:none">{{f.contents}}</div>-->
-	</li>
+<li> <a href="{% url 'files:file' f.id %}">{{ f.name }}</a></li>
 {% endfor %}
+<li><a href="{% url 'files:directory' root.id %}"><em>Edit directory</em></a></li>
 </ul>
 </div>

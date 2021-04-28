@@ -1,7 +1,9 @@
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 
 from files import models
 from files.utils import traverse
+from files.forms import *
 
 from collections import defaultdict
 
@@ -39,12 +41,67 @@ def index(request):
 
 def fileview(request, file_id):
     try:
+        # Load in the file that was requested
         f = models.File.objects.get(id=file_id)
     except File.DoesNotExist:
         raise Http404("Non-existent file ID provided")
-    permissions = f.permission_set.all()
-    return render(request, 'files/fileview.html', {'file': f, 'permissions': permissions})
 
+    # Get the list of currently permitted users
+    users = [p.owner for p in f.permission_set.all()]
+
+    # If a permission change has been requested
+    if request.method == 'POST':
+        # Load and validate form data
+        update_perm_form = PermissionUpdateForm(request.POST, users = users)
+        if update_perm_form.is_valid():
+            # Deal with updating permissions
+            if update_perm_form.cleaned_data['add']:
+                # Add new user to permission list
+                new_user = models.Permission(file = f, owner = update_perm_form.cleaned_data['add'])
+                new_user.save()
+            for removed_user in update_perm_form.cleaned_data['remove']:
+                # Remove user from permission list
+                permission = models.Permission.objects.filter(file = f, owner = removed_user)
+                permission.delete()
+        else:
+            return HttpResponseBadRequest('Invalid permission update request')
+        # Refresh the list of users, and display to the user as normal
+        users = [p.owner for p in f.permission_set.all()]
+
+    # Create a form to allow the user to update permissions
+    perm_form = PermissionUpdateForm(users = users)
+    return render(request, 'files/fileview.html', {'file': f, 'perm_form': perm_form})
+
+# Conceptually similar to fileview, but using different tables
 def dirview(request, dir_id):
-    # Stub
-    return None
+    try:
+        # Load in the file that was requested
+        d = models.Directory.objects.get(id=dir_id)
+    except Directory.DoesNotExist:
+        raise Http404("Non-existent directory ID provided")
+
+    # Get the list of currently permitted users
+    users = [p.owner for p in d.directory_permission_set.all()]
+
+    # If a permission change has been requested
+    if request.method == 'POST':
+        # Load and validate form data
+        update_perm_form = PermissionUpdateForm(request.POST, users = users)
+        if update_perm_form.is_valid():
+            # Deal with updating permissions
+            if update_perm_form.cleaned_data['add']:
+                # Add new user to permission list
+                new_user = models.Directory_Permission(directory = d, owner = update_perm_form.cleaned_data['add'])
+                new_user.save()
+            for removed_user in update_perm_form.cleaned_data['remove']:
+                # Remove user from permission list
+                permission = models.Permission.objects.filter(directory = d, owner = removed_user)
+                permission.delete()
+        else:
+            return HttpResponseBadRequest('Invalid permission update request')
+        # Refresh the list of users, and display to the user as normal
+        users = [p.owner for p in d.directory_permission_set.all()]
+
+    # Create a form to allow the user to update permissions
+    perm_form = PermissionUpdateForm(users = users)
+    return render(request, 'files/dirview.html', {'directory': d, 'perm_form': perm_form})

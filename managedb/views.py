@@ -144,13 +144,19 @@ def setup(request):
                 cursor.execute("""CREATE POLICY %s_insert_empty ON %s FOR INSERT
                 WITH CHECK (%s NOT IN (SELECT %s FROM %s))"""
                         % (perm_table, perm_table, perm_column, perm_column, perm_table))
+                # Allow deleting permission entries where the current user has permission on that entry
+                cursor.execute("""CREATE POLICY %s_delete ON %s FOR DELETE
+                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
+                        % (perm_table, perm_table, perm_column, perm_column, perm_table, owner_column))
 
                 # Having added these policies, allow all users to use the main table
                 cursor.execute("""GRANT SELECT, INSERT, UPDATE ON %s TO PUBLIC"""
                         % (source_table))
                 # Grant SELECT (unrestricted) and INSERT (restricted using policies above) on the permissions table - do not grant UPDATE
-                cursor.execute("""GRANT SELECT, INSERT ON %s TO PUBLIC"""
+                cursor.execute("""GRANT SELECT, INSERT, DELETE ON %s TO PUBLIC"""
                         % (perm_table))
+                # Permit access to ID sequences to allow inserting new records with sequential IDs
+                cursor.execute("""GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO PUBLIC""")
 
         # Feed the result back to the user
         return render(request, 'managedb/result.html', {'errors': (len(errstring) > 0), 'errstring': errstring})

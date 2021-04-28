@@ -1,13 +1,12 @@
 <!doctype html public>
 <html>
 	<head>
-		<title>{{ file.name }}</title>
+		<title>{{ directory.name }}</title>
 	</head>
 	<body>
-		<h1>{{ file.name }}</h1>
-		<h3>Contents</h3>
-		{{ file.contents|escape|linebreaks }}
+		<h1>{{ directory.name }} (directory)</h1>
 		{% include "files/permissions.html" %}
 		<p><a href="{% url 'files:index' %}">Back to file browser</a></p>
 	</body>
 </html>
+
