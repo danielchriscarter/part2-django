@@ -60,7 +60,10 @@ def select(request):
                 dependents[table] = foreign_key
             # Get details of the table columns, if we don't have them already
             # Note: this doesn't work reliably with tables where the same foreign key appears in more than one column
-            for (table, foreign_key) in dependents.items():
+            # Include the table itself as well as its dependents
+            search_tables = list(dependents.keys())
+            search_tables.append(model_data['table'])
+            for table in search_tables:
                 if table not in columns:
                     # N.B. %% escapes % sign from Django interpolation (here we want to send an actual % sign to SQL server)
                     cursor.execute("""SELECT column_name
@@ -81,9 +84,10 @@ def select(request):
     forms = []
     for (name, model) in models.items():
         if len(model['dependencies']) > 0:
+            owner_cols = columns[model['table']]
             tables = model['dependencies'].keys()
             # Columns output using an approach described at https://adamj.eu/tech/2020/02/18/safely-including-data-for-javascript-in-a-django-template/
-            forms.append(TableMappingForm(title=name, tables=tables, columns=columns, prefix=name))
+            forms.append(TableMappingForm(title=name, owner_cols=owner_cols, tables=tables, columns=columns, prefix=name))
     return render(request, 'managedb/table_mapping.html', {'forms': forms, 'columns' : columns, 'database': database})
 
 
@@ -98,7 +102,8 @@ def setup(request):
         for (name, model) in models.items():
             if len(model['dependencies']) > 0:
                 tables = model['dependencies'].keys()
-                form = TableMappingForm(request.POST, tables=tables, columns=columns, prefix=name)
+                form = TableMappingForm(request.POST, owner_cols=owner_cols, tables=tables,
+                        columns=columns, prefix=name)
                 if form.is_valid():
                     if form.cleaned_data['include']:
                         form_data[name] = form.cleaned_data
@@ -113,6 +118,7 @@ def setup(request):
             perm_table = assignment['table']
             perm_column = models[model]['dependencies'][perm_table]
             owner_column = assignment['column']
+            source_owner_column = assignment['owner_field']
 
             with connections[database].cursor() as cursor:
                 # Enable row-level security on the relevant table
@@ -122,6 +128,10 @@ def setup(request):
                 cursor.execute("""CREATE POLICY %s_view ON %s
                 USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
                         % (source_table, source_table, source_column, perm_column, perm_table, owner_column))
+                # Or where they are the owner
+                cursor.execute("""CREATE POLICY %s_view_owner ON %s
+                USING (%s = session_user)"""
+                        % (source_table, source_table, source_owner_column))
                 # Insertions to the "main" tables are not restricted, as a USING policy only applies to already-existing records
                 # (see https://www.postgresql.org/docs/13/sql-createpolicy.html)
                 # Allow all insertions
@@ -136,14 +146,10 @@ def setup(request):
                 cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
                 USING (true);"""
                         % (perm_table, perm_table))
-                # Only allow users to set permissions where they already have access to that file
+                # Only allow users to set permissions where they are the owner
                 cursor.execute("""CREATE POLICY %s_insert ON %s FOR INSERT
                 WITH CHECK (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
-                        % (perm_table, perm_table, perm_column, perm_column, perm_table, owner_column))
-                # Special case (to allow for new files) - a file with no current users can have a permission created for it
-                cursor.execute("""CREATE POLICY %s_insert_empty ON %s FOR INSERT
-                WITH CHECK (%s NOT IN (SELECT %s FROM %s))"""
-                        % (perm_table, perm_table, perm_column, perm_column, perm_table))
+                        % (perm_table, perm_table, perm_column, source_column, source_table, source_owner_column))
                 # Allow deleting permission entries where the current user has permission on that entry
                 cursor.execute("""CREATE POLICY %s_delete ON %s FOR DELETE
                 USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""

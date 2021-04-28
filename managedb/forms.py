@@ -22,16 +22,20 @@ class SelectDBForm(forms.Form):
 class TableMappingForm(forms.Form):
     include = forms.BooleanField(required=False)
     # Requirements for table and column values are enforced below
+    owner_field = forms.ChoiceField(required=False)
     table = forms.ChoiceField(required=False)
     column = ColumnChoiceField(required=False,
             widget=forms.Select(attrs={'class' : 'colselect'}))
     def __init__(self, *args, **kwargs):
         self.title = kwargs.pop('title', ())
+        owner_cols = kwargs.pop('owner_cols', ())
         tables = kwargs.pop('tables', ())
         # Save columns for later validation purposes
         self.columns = kwargs.pop('columns', ())
         super().__init__(*args, **kwargs)
+        owner_choices = [('', '')] + [(x,x) for x in owner_cols]
         table_choices = [('', '')] + [(x,x) for x in tables]
+        self.fields['owner_field'] = forms.ChoiceField(choices=owner_choices, required=False)
         self.fields['table'] = forms.ChoiceField(choices=table_choices, required=False,
                 widget=forms.Select(attrs={'onchange' : 'update(this.id);'}))
         # Column selection field is populated in JavaScript

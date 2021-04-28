@@ -75,7 +75,7 @@ def fileview(request, file_id):
 # Conceptually similar to fileview, but using different tables
 def dirview(request, dir_id):
     try:
-        # Load in the file that was requested
+        # Load in the directory that was requested
         d = models.Directory.objects.get(id=dir_id)
     except Directory.DoesNotExist:
         raise Http404("Non-existent directory ID provided")
@@ -105,3 +105,76 @@ def dirview(request, dir_id):
     # Create a form to allow the user to update permissions
     perm_form = PermissionUpdateForm(users = users)
     return render(request, 'files/dirview.html', {'directory': d, 'perm_form': perm_form})
+
+def fileedit(request, file_id):
+    try:
+        # Load in the file that was requested
+        f = models.File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        raise Http404("Non-existent file ID provided")
+
+    if request.method == 'POST':
+        # Load and validate form data
+        edit_form = FileEditForm(request.POST, edit_file = f)
+        if edit_form.is_valid():
+            # Update file contents
+            f.contents = edit_form.cleaned_data['contents']
+            f.save()
+            # Redirect user back to file viewing page
+            return fileview(request, file_id)
+        else:
+            return HttpResponseBadRequest('Invalid file contents update request')
+
+    # If we weren't sent an update POST, show the editing interface
+    edit_form = FileEditForm(edit_file = f)
+    return render(request, 'files/fileedit.html', {'file' : f, 'form' : edit_form})
+
+def newfile(request, dir_id):
+    try:
+        # Load in the containing directory that was requested
+        d = models.Directory.objects.get(id=dir_id)
+    except Directory.DoesNotExist:
+        raise Http404("Non-existent directory ID provided")
+ 
+    if request.method == 'POST':
+        # Load and validate form data
+        file_form = NewFileForm(request.POST)
+        if file_form.is_valid():
+            username = os.environ['REMOTE_USER']
+            # Create a new file
+            new_file = models.File(name = file_form.cleaned_data['name'], directory = d, contents='', owner=username)
+            new_file.save()
+            #new_perm = models.Permission(file = new_file, owner = username)
+            #new_perm.save()
+            # Redirect user to editing interface, to add content to the file
+            return fileedit(request, new_file.id)
+        else:
+            return HttpResponseBadRequest('Containing directory does not exist')
+
+    # If we weren't sent a POST, get the name of the file from the user
+    file_form = NewFileForm()
+    return render(request, 'files/create.html', {'type' : 'file', 'form' : file_form, 'dir' : d})
+
+def newdir(request, dir_id):
+    try:
+        # Load in the containing directory that was requested
+        d = models.Directory.objects.get(id=dir_id)
+    except Directory.DoesNotExist:
+        raise Http404("Non-existent directory ID provided")
+
+    if request.method == 'POST':
+        # Load and validate form data
+        dir_form = NewDirForm(request.POST)
+        if dir_form.is_valid():
+            username = os.environ['REMOTE_USER']
+            # Create a new directory
+            new_dir = models.Directory(name = file_form.cleaned_data['name'], parent = d, owner=username)
+            new_dir.save()
+            # Redirect user to directory management page
+            return dirview(request, new_dir.id)
+        else:
+            return HttpResponseBadRequest('Containing directory does not exist')
+
+    # If we weren't sent a POST, get the name of the file from the user
+    file_form = NewFileForm()
+    return render(request, 'files/create.html', {'type' : 'directory', 'form' : file_form, 'dir' : d})

@@ -1,0 +1,17 @@
+<!doctype html public>
+<html>
+	<head>
+		<title>Create new {{ type }}</title>
+	</head>
+	<body>
+		<h1>Create new {{ type }}</h1>
+		<p>This {{ type }} will be created in {{ dir.name }}</p>
+		<form action="" method="post">
+			{% csrf_token %}
+			{{ form }}
+			<br>
+			<input type="submit" value="Create">
+                </form>
+		<p><a href="{% url 'files:directory' dir.id %}">Cancel</a></p>
+	</body>
+</html>
