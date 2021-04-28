@@ -1,6 +1,7 @@
 from django.shortcuts import render
 
 from files import models
+from files.utils import traverse
 
 from collections import defaultdict
 
@@ -26,9 +27,24 @@ def index(request):
         else:
             subdirs[d.parent_id].append(d)
     for f in files:
-        subfiles[f.directory_id].append(d)
+        subfiles[f.directory_id].append(f)
+
+    # Convert into a suitable format for output
+    dirlist = []
+    for root in roots:
+        dirlist.append(traverse(root, subfiles, subdirs))
 
     # Display directory tree to user
-    context = {'directories': subdirs, 'files' : subfiles, 'roots': roots, 'user' : username}
-    return render(request, 'files/index.html', context)
+    return render(request, 'files/index.html', {'directories': dirlist, 'user': username})
 
+def fileview(request, file_id):
+    try:
+        f = models.File.objects.get(id=file_id)
+    except File.DoesNotExist:
+        raise Http404("Non-existent file ID provided")
+    permissions = f.permission_set.all()
+    return render(request, 'files/fileview.html', {'file': f, 'permissions': permissions})
+
+def dirview(request, dir_id):
+    # Stub
+    return None

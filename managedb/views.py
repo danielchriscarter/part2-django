@@ -82,6 +82,7 @@ def select(request):
     for (name, model) in models.items():
         if len(model['dependencies']) > 0:
             tables = model['dependencies'].keys()
+            # Columns output using an approach described at https://adamj.eu/tech/2020/02/18/safely-including-data-for-javascript-in-a-django-template/
             forms.append(TableMappingForm(title=name, tables=tables, columns=columns, prefix=name))
     return render(request, 'managedb/table_mapping.html', {'forms': forms, 'columns' : columns, 'database': database})
 
@@ -123,16 +124,24 @@ def setup(request):
                         % (source_table, source_table, source_column, perm_column, perm_table, owner_column))
                 # Insertions to the "main" tables are not restricted, as a USING policy only applies to already-existing records
                 # (see https://www.postgresql.org/docs/13/sql-createpolicy.html)
+                # Allow all insertions
+                cursor.execute("""CREATE POLICY %s_insert ON %s FOR INSERT
+                WITH CHECK (true);"""
+                        % (source_table, source_table))
 
                 # Also enable row-level security on the permissions table
                 cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY"""
                         % (perm_table))
+                # Allow all users to view the permissions table
+                cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
+                USING (true);"""
+                        % (perm_table, perm_table))
                 # Only allow users to set permissions where they already have access to that file
-                cursor.execute("""CREATE POLICY %s_view ON %s FOR INSERT
+                cursor.execute("""CREATE POLICY %s_insert ON %s FOR INSERT
                 WITH CHECK (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
                         % (perm_table, perm_table, perm_column, perm_column, perm_table, owner_column))
                 # Special case (to allow for new files) - a file with no current users can have a permission created for it
-                cursor.execute("""CREATE POLICY %s_empty ON %s FOR INSERT
+                cursor.execute("""CREATE POLICY %s_insert_empty ON %s FOR INSERT
                 WITH CHECK (%s NOT IN (SELECT %s FROM %s))"""
                         % (perm_table, perm_table, perm_column, perm_column, perm_table))
 

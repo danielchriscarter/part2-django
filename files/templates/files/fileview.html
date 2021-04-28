@@ -1,0 +1,17 @@
+<!doctype html public>
+<html>
+	<head>
+		<title>{{ file.name }}</title>
+	</head>
+	<body>
+		<h1>{{ file.name }}</h1>
+		<h3>Contents</h3>
+		<p>{{ file.contents|escape|linebreaks }}</p>
+		<h3>Current allowed users</h3>
+		<ul>
+			{% for permission in permissions %}
+			<li>{{ permission.owner }}</li>
+			{% endfor %}
+		</ul>
+	</body>
+</html>

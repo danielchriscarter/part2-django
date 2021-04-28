@@ -19,6 +19,8 @@ from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'krbsite.settings')
 
+# Inspired by code from https://drumcoder.co.uk/blog/2010/nov/12/apache-environment-variables-and-mod_wsgi/
+
 _application = get_wsgi_application()
 
 saved_envvars = ['REMOTE_USER', 'KRB5CCNAME']

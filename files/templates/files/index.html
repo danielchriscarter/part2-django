@@ -17,8 +17,8 @@
 		<h1>File browser</h1>
 		<p>You are logged in as {{user}}</p>
 		<ul>
-			{% for d in roots %}
-				{% include "files/listing.html" with root_id=d.id root_name=d.name %}
+			{% for dir, subfiles, subdirs in directories %}
+				{% include "files/listing.html" with root=dir files=subfiles dirs=subdirs %}
 			{% endfor %}
 		</ul>
 	</body>
