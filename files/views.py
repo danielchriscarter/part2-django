@@ -168,7 +168,7 @@ def newdir(request, dir_id):
         if dir_form.is_valid():
             username = os.environ['REMOTE_USER']
             # Create a new directory
-            new_dir = models.Directory(name = file_form.cleaned_data['name'], parent = d, owner=username)
+            new_dir = models.Directory(name = dir_form.cleaned_data['name'], parent = d, owner=username)
             new_dir.save()
             # Redirect user to directory management page
             return dirview(request, new_dir.id)

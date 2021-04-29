@@ -101,6 +101,7 @@ def setup(request):
 
         for (name, model) in models.items():
             if len(model['dependencies']) > 0:
+                owner_cols = columns[model['table']]
                 tables = model['dependencies'].keys()
                 form = TableMappingForm(request.POST, owner_cols=owner_cols, tables=tables,
                         columns=columns, prefix=name)
