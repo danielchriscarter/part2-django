@@ -10,4 +10,5 @@ urlpatterns = [
         path('dir/<int:dir_id>/', views.dirview, name='directory'),
         path('newfile/<int:dir_id>/', views.newfile, name='newfile'),
         path('newdir/<int:dir_id>/', views.newdir, name='newdir'),
+        path('newdir/root/', views.newdir_root, name='newdir_root'),
 ]

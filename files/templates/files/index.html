@@ -21,5 +21,6 @@
 				{% include "files/listing.html" with root=dir files=subfiles dirs=subdirs %}
 			{% endfor %}
 		</ul>
+		<p><a href="{% url 'files:newdir_root' %}">Create new directory</a></p>
 	</body>
 </html>

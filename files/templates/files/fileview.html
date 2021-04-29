@@ -8,8 +8,10 @@
 		<p>This file is owned by {{ file.owner }}</h1>
 		<h3>Contents</h3>
 		{{ file.contents|escape|linebreaks }}
+		{% if owner %}
 		<p><a href="{% url 'files:fileedit' file.id %}">Edit</a></p>
 		{% include "files/permissions.html" %}
+		{% endif %}
 		<p><a href="{% url 'files:index' %}">Back to file browser</a></p>
 	</body>
 </html>

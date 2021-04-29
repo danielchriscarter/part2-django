@@ -1,17 +1,13 @@
 from django.http import HttpResponseBadRequest
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from files import models
-from files.utils import traverse
+from files.utils import traverse, username
 from files.forms import *
 
 from collections import defaultdict
 
-import os
-
 def index(request):
-    username = os.environ['REMOTE_USER']
-
     # Get file and directory records from database
     files = models.File.objects.all()
     directories = models.Directory.objects.all()
@@ -37,7 +33,7 @@ def index(request):
         dirlist.append(traverse(root, subfiles, subdirs))
 
     # Display directory tree to user
-    return render(request, 'files/index.html', {'directories': dirlist, 'user': username})
+    return render(request, 'files/index.html', {'directories': dirlist, 'user': username()})
 
 def fileview(request, file_id):
     try:
@@ -70,7 +66,10 @@ def fileview(request, file_id):
 
     # Create a form to allow the user to update permissions
     perm_form = PermissionUpdateForm(users = users)
-    return render(request, 'files/fileview.html', {'file': f, 'perm_form': perm_form})
+    # Check whether current user is the owner
+    # (N.B. not for security purposes - this just avoids showing the user options which will only produce SQL errors)
+    is_owner = (username() == f.owner)
+    return render(request, 'files/fileview.html', {'file': f, 'perm_form': perm_form, 'owner' : is_owner})
 
 # Conceptually similar to fileview, but using different tables
 def dirview(request, dir_id):
@@ -95,7 +94,7 @@ def dirview(request, dir_id):
                 new_user.save()
             for removed_user in update_perm_form.cleaned_data['remove']:
                 # Remove user from permission list
-                permission = models.Permission.objects.filter(directory = d, owner = removed_user)
+                permission = models.Directory_Permission.objects.filter(directory = d, owner = removed_user)
                 permission.delete()
         else:
             return HttpResponseBadRequest('Invalid permission update request')
@@ -104,7 +103,9 @@ def dirview(request, dir_id):
 
     # Create a form to allow the user to update permissions
     perm_form = PermissionUpdateForm(users = users)
-    return render(request, 'files/dirview.html', {'directory': d, 'perm_form': perm_form})
+    # Check whether current user is the owner
+    is_owner = (username() == d.owner)
+    return render(request, 'files/dirview.html', {'directory': d, 'perm_form': perm_form, 'owner' : is_owner})
 
 def fileedit(request, file_id):
     try:
@@ -121,7 +122,7 @@ def fileedit(request, file_id):
             f.contents = edit_form.cleaned_data['contents']
             f.save()
             # Redirect user back to file viewing page
-            return fileview(request, file_id)
+            return redirect('files:file', file_id = file_id)
         else:
             return HttpResponseBadRequest('Invalid file contents update request')
 
@@ -140,14 +141,11 @@ def newfile(request, dir_id):
         # Load and validate form data
         file_form = NewFileForm(request.POST)
         if file_form.is_valid():
-            username = os.environ['REMOTE_USER']
             # Create a new file
-            new_file = models.File(name = file_form.cleaned_data['name'], directory = d, contents='', owner=username)
+            new_file = models.File(name = file_form.cleaned_data['name'], directory = d, contents='', owner=username())
             new_file.save()
-            #new_perm = models.Permission(file = new_file, owner = username)
-            #new_perm.save()
             # Redirect user to editing interface, to add content to the file
-            return fileedit(request, new_file.id)
+            return redirect('files:file', file_id = new_file.id)
         else:
             return HttpResponseBadRequest('Containing directory does not exist')
 
@@ -166,15 +164,32 @@ def newdir(request, dir_id):
         # Load and validate form data
         dir_form = NewDirForm(request.POST)
         if dir_form.is_valid():
-            username = os.environ['REMOTE_USER']
             # Create a new directory
-            new_dir = models.Directory(name = dir_form.cleaned_data['name'], parent = d, owner=username)
+            new_dir = models.Directory(name = dir_form.cleaned_data['name'], parent = d, owner=username())
             new_dir.save()
             # Redirect user to directory management page
-            return dirview(request, new_dir.id)
+            return redirect('files:directory', dir_id = new_dir.id)
         else:
             return HttpResponseBadRequest('Containing directory does not exist')
 
     # If we weren't sent a POST, get the name of the file from the user
-    file_form = NewFileForm()
+    file_form = NewDirForm()
     return render(request, 'files/create.html', {'type' : 'directory', 'form' : file_form, 'dir' : d})
+
+# Similar to newdir, but uses a different form since there's no parent directory
+def newdir_root(request):
+    if request.method == 'POST':
+        # Load and validate form data
+        dir_form = NewDirForm(request.POST)
+        if dir_form.is_valid():
+            # Create a new directory
+            new_dir = models.Directory(name = dir_form.cleaned_data['name'], parent = None, owner=username())
+            new_dir.save()
+            # Redirect user to directory management page
+            return redirect('files:directory', dir_id = new_dir.id)
+        else:
+            return HttpResponseBadRequest('Containing directory does not exist')
+
+    # If we weren't sent a POST, get the name of the file from the user
+    file_form = NewDirForm()
+    return render(request, 'files/rootdir.html', {'type' : 'directory', 'form' : file_form})

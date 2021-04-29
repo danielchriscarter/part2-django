@@ -125,11 +125,11 @@ def setup(request):
                 # Enable row-level security on the relevant table
                 cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY"""
                         % (source_table))
-                # Only allow users to view and edit files which they have permission to see
-                cursor.execute("""CREATE POLICY %s_view ON %s
+                # Only allow users to view files which they have permission to see
+                cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
                 USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
                         % (source_table, source_table, source_column, perm_column, perm_table, owner_column))
-                # Or where they are the owner
+                # Or where they are the owner (in which case allow editing as well)
                 cursor.execute("""CREATE POLICY %s_view_owner ON %s
                 USING (%s = session_user)"""
                         % (source_table, source_table, source_owner_column))
@@ -151,10 +151,10 @@ def setup(request):
                 cursor.execute("""CREATE POLICY %s_insert ON %s FOR INSERT
                 WITH CHECK (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
                         % (perm_table, perm_table, perm_column, source_column, source_table, source_owner_column))
-                # Allow deleting permission entries where the current user has permission on that entry
+                # Similarly, only allow the owner to delete permissions
                 cursor.execute("""CREATE POLICY %s_delete ON %s FOR DELETE
                 USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
-                        % (perm_table, perm_table, perm_column, perm_column, perm_table, owner_column))
+                        % (perm_table, perm_table, perm_column, source_column, source_table, source_owner_column))
 
                 # Having added these policies, allow all users to use the main table
                 cursor.execute("""GRANT SELECT, INSERT, UPDATE ON %s TO PUBLIC"""
