@@ -14,7 +14,7 @@ GssapiCredStore client_keytab:/var/www/apache.keytab
 
 # Save delegated tickets to directory, and add random suffix to make them harder to brute-force
 GssapiDelegCcacheDir /var/run/apache2/clientcaches
-GssapiDelegCcacheUnique On
+GssapiDelegCcacheUnique Secure
 
 # Strip realm off user name (after Kerberos library has verified it)
 GssapiLocalName On

@@ -18,10 +18,10 @@ class File(models.Model):
 class Permission(models.Model):
     id = models.AutoField(primary_key=True)
     file = models.ForeignKey(File, on_delete=models.CASCADE, null=False)
-    owner = models.CharField(max_length=128) # TODO: something more specific here?
+    owner = models.CharField(max_length=128) # Just does a text match on username
 
 class Directory_Permission(models.Model):
     id = models.AutoField(primary_key=True)
     directory = models.ForeignKey(Directory, on_delete=models.CASCADE, null=False)
-    owner = models.CharField(max_length=128) # TODO: something more specific here?
+    owner = models.CharField(max_length=128) # Just does a text match on username
 
