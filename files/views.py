@@ -32,8 +32,11 @@ def index(request):
     for root in roots:
         dirlist.append(traverse(root, subfiles, subdirs))
 
+    # Display a search box
+    search_form = SearchForm()
+
     # Display directory tree to user
-    return render(request, 'files/index.html', {'directories': dirlist, 'user': username()})
+    return render(request, 'files/index.html', {'directories': dirlist, 'user': username(), 'search_form' : search_form})
 
 def fileview(request, file_id):
     try:
@@ -193,3 +196,23 @@ def newdir_root(request):
     # If we weren't sent a POST, get the name of the file from the user
     file_form = NewDirForm()
     return render(request, 'files/rootdir.html', {'type' : 'directory', 'form' : file_form})
+
+def search(request):
+    if request.method == 'POST':
+        # Load in search term from user
+        search_form = SearchForm(request.POST)
+        if search_form.is_valid():
+            # Extract search term from page
+            term = search_form.cleaned_data['term']
+            # Get database table name to search in
+            table = models.File._meta.db_table
+            # Deliberate SQL injection vulnerability
+            query = "SELECT * FROM " + table + " WHERE CONTENTS LIKE '%%%%" + term + "%%%%'"
+            results = models.File.objects.raw(query)
+            filenames = [f.name for f in results]
+            return render(request, 'files/search.html', {'term' : term, 'results' : filenames})
+        else:
+            return HttpResponseBadRequest('Error in processing search request')
+
+    # This page only accepts POST requests - redirect back to the homepage (which has a search box) otherwise
+    return redirect('files:index')

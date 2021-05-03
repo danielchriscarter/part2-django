@@ -23,3 +23,6 @@ class NewFileForm(forms.Form):
 
 class NewDirForm(forms.Form):
     name = forms.CharField(required=True)
+
+class SearchForm(forms.Form):
+    term = forms.CharField(required=True)

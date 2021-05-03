@@ -22,5 +22,13 @@
 			{% endfor %}
 		</ul>
 		<p><a href="{% url 'files:newdir_root' %}">Create new directory</a></p>
+		<br>
+		<h2>Search for a file</h2>
+		<form action="{% url 'files:search' %}" method="post">
+			{% csrf_token %}
+			{{ search_form }}
+			<br>
+			<input type="submit" value="Search">
+		</form>
 	</body>
 </html>
