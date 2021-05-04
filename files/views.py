@@ -207,7 +207,7 @@ def search(request):
             # Get database table name to search in
             table = models.File._meta.db_table
             # Deliberate SQL injection vulnerability
-            query = "SELECT * FROM " + table + " WHERE CONTENTS LIKE '%%%%" + term + "%%%%'"
+            query = "SELECT * FROM " + table + " WHERE CONTENTS LIKE '%%" + term + "%%'"
             results = models.File.objects.raw(query)
             filenames = [f.name for f in results]
             return render(request, 'files/search.html', {'term' : term, 'results' : filenames})
