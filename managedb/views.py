@@ -120,12 +120,24 @@ def setup(request):
             source_owner_column = assignment['owner_field']
 
             with connections[database].cursor() as cursor:
+                # Procedure to determine whether a user has a permission entry on a given object
+                # (Using SECURITY DEFINER to avoid a circular reference on the permission table)
+                cursor.execute(f"""CREATE OR REPLACE FUNCTION {source_table}_permitted(
+                object {source_table}.{source_column}%TYPE)
+                RETURNS boolean
+                AS $$
+                BEGIN
+                RETURN session_user IN (SELECT {owner_column} FROM {perm_table}
+                WHERE {perm_column} = object);
+                END;
+                $$ LANGUAGE plpgsql
+                SECURITY DEFINER;""")
+
                 # Enable row-level security on the relevant table
                 cursor.execute(f"""ALTER TABLE {source_table} ENABLE ROW LEVEL SECURITY""")
-                # Only allow users to view files which they have permission to see
+                # Only allow users to view objects which they have permission to see
                 cursor.execute(f"""CREATE POLICY {source_table}_view ON {source_table} FOR SELECT
-                USING ({source_column} IN (SELECT {perm_column} FROM {perm_table}
-                WHERE {owner_column} = session_user))""")
+                USING ((SELECT {source_table}_permitted({source_column})))""")
                 # Or where they are the owner (in which case allow editing as well)
                 cursor.execute(f"""CREATE POLICY {source_table}_view_owner ON {source_table}
                 USING ({source_owner_column} = session_user)""")
@@ -137,16 +149,16 @@ def setup(request):
 
                 # Also enable row-level security on the permissions table
                 cursor.execute(f"""ALTER TABLE {perm_table} ENABLE ROW LEVEL SECURITY""")
-                # Allow all users to view the permissions table
+                # Give a file's owner full access to permission entries
+                cursor.execute(f"""CREATE POLICY {perm_table}_owner ON {perm_table}
+                USING ({perm_column} IN (SELECT {source_column} FROM {source_table}
+                WHERE {source_owner_column} = session_user))""")
+                # Otherwise, allow users to view permission entries on files which they have permission to see
                 cursor.execute(f"""CREATE POLICY {perm_table}_view ON {perm_table} FOR SELECT
-                USING (true);""")
+                USING ((SELECT {source_table}_permitted({perm_column})))""")
                 # Only allow users to set permissions where they are the owner
                 cursor.execute(f"""CREATE POLICY {perm_table}_insert ON {perm_table} FOR INSERT
                 WITH CHECK ({perm_column} IN (SELECT {source_column} FROM {source_table}
-                WHERE {source_owner_column} = session_user))""")
-                # Similarly, only allow the owner to delete permissions
-                cursor.execute(f"""CREATE POLICY {perm_table}_delete ON {perm_table} FOR DELETE
-                USING ({perm_column} IN (SELECT {source_column} FROM {source_table}
                 WHERE {source_owner_column} = session_user))""")
 
                 # Having added these policies, allow all users to use the main table

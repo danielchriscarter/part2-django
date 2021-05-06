@@ -32,6 +32,7 @@
 		<h1>Set up database: Step 2</h1>
 		<p>Applying permissions to the <strong><code>{{database}}</code></strong> database</p>
 		<p>Please select the tables which you wish to use for storing user permissions:</p>
+		<p>The "Owner field" refers to the column in the main data table which has the name of the object's owner.</p>
 		<form action="{% url 'setup' %}" method="post">
 			{% csrf_token %}
 			{% for form in forms %}
