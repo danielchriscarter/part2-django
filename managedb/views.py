@@ -121,46 +121,40 @@ def setup(request):
 
             with connections[database].cursor() as cursor:
                 # Enable row-level security on the relevant table
-                cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY"""
-                        % (source_table))
+                cursor.execute(f"""ALTER TABLE {source_table} ENABLE ROW LEVEL SECURITY""")
                 # Only allow users to view files which they have permission to see
-                cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
-                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
-                        % (source_table, source_table, source_column, perm_column, perm_table, owner_column))
+                cursor.execute(f"""CREATE POLICY {source_table}_view ON {source_table} FOR SELECT
+                USING ({source_column} IN (SELECT {perm_column} FROM {perm_table}
+                WHERE {owner_column} = session_user))""")
                 # Or where they are the owner (in which case allow editing as well)
-                cursor.execute("""CREATE POLICY %s_view_owner ON %s
-                USING (%s = session_user)"""
-                        % (source_table, source_table, source_owner_column))
+                cursor.execute(f"""CREATE POLICY {source_table}_view_owner ON {source_table}
+                USING ({source_owner_column} = session_user)""")
                 # Insertions to the "main" tables are not restricted, as a USING policy only applies to already-existing records
                 # (see https://www.postgresql.org/docs/13/sql-createpolicy.html)
                 # Allow all insertions
-                cursor.execute("""CREATE POLICY %s_insert ON %s FOR INSERT
-                WITH CHECK (true);"""
-                        % (source_table, source_table))
+                cursor.execute(f"""CREATE POLICY {source_table}_insert ON {source_table} FOR INSERT
+                WITH CHECK (true);""")
 
                 # Also enable row-level security on the permissions table
-                cursor.execute("""ALTER TABLE %s ENABLE ROW LEVEL SECURITY"""
-                        % (perm_table))
+                cursor.execute(f"""ALTER TABLE {perm_table} ENABLE ROW LEVEL SECURITY""")
                 # Allow all users to view the permissions table
-                cursor.execute("""CREATE POLICY %s_view ON %s FOR SELECT
-                USING (true);"""
-                        % (perm_table, perm_table))
+                cursor.execute(f"""CREATE POLICY {perm_table}_view ON {perm_table} FOR SELECT
+                USING (true);""")
                 # Only allow users to set permissions where they are the owner
-                cursor.execute("""CREATE POLICY %s_insert ON %s FOR INSERT
-                WITH CHECK (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
-                        % (perm_table, perm_table, perm_column, source_column, source_table, source_owner_column))
+                cursor.execute(f"""CREATE POLICY {perm_table}_insert ON {perm_table} FOR INSERT
+                WITH CHECK ({perm_column} IN (SELECT {source_column} FROM {source_table}
+                WHERE {source_owner_column} = session_user))""")
                 # Similarly, only allow the owner to delete permissions
-                cursor.execute("""CREATE POLICY %s_delete ON %s FOR DELETE
-                USING (%s IN (SELECT %s FROM %s WHERE %s = session_user))"""
-                        % (perm_table, perm_table, perm_column, source_column, source_table, source_owner_column))
+                cursor.execute(f"""CREATE POLICY {perm_table}_delete ON {perm_table} FOR DELETE
+                USING ({perm_column} IN (SELECT {source_column} FROM {source_table}
+                WHERE {source_owner_column} = session_user))""")
 
                 # Having added these policies, allow all users to use the main table
-                cursor.execute("""GRANT SELECT, INSERT, UPDATE ON %s TO PUBLIC"""
-                        % (source_table))
+                cursor.execute(f"""GRANT SELECT, INSERT, UPDATE ON {source_table} TO PUBLIC""")
                 # Grant SELECT (unrestricted) and INSERT (restricted using policies above) on the permissions table - do not grant UPDATE
-                cursor.execute("""GRANT SELECT, INSERT, DELETE ON %s TO PUBLIC"""
-                        % (perm_table))
+                cursor.execute(f"""GRANT SELECT, INSERT, DELETE ON {perm_table} TO PUBLIC""")
                 # Permit access to ID sequences to allow inserting new records with sequential IDs
+                # (see https://stackoverflow.com/questions/9325017/error-permission-denied-for-sequence-cities-id-seq-using-postgres)
                 cursor.execute("""GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO PUBLIC""")
 
         # Feed the result back to the user
