@@ -32,8 +32,4 @@ class FileDBRouter:
         """
         Only put files into the 'data' database, and everything else into the 'default' database
         """
-        if (app_label == self.APP_LABEL) and (db == self.DATA_DB):
-            return True
-        if  (app_label != self.APP_LABEL) and (db != self.DATA_DB):
-            return True
-        return False
+        return (app_label == self.APP_LABEL) == (db == self.DATA_DB)
