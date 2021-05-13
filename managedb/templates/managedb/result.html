@@ -2,16 +2,20 @@
 <html>
 	<head>
 		<title>Set up database</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		{% load crispy_forms_tags %}
 	</head>
 	<body>
-		<h1>Set up database: Complete</h1>
-		<p>The database setup has been completed.</p>
-		{% if errors %}
-		<p>The following errors were detected:</p>
-		<code>
+		<div class="col-md-12">
+			<h1>Set up database: Complete</h1>
+			<p>The database setup has been completed.</p>
+			{% if errors %}
+			<p>The following errors were detected:</p>
+			<code>
 			{{ errstring|escape|linebreaks }}
-		</code>
-		{% endif %}
+			</code>
+			{% endif %}
+		</div>
 	</body>
 </html>
 

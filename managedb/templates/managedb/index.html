@@ -2,11 +2,15 @@
 <html>
 	<head>
 		<title>Set up database</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		{% load crispy_forms_tags %}
 	</head>
 	<body>
-		<h1>Set up database: Step 1</h1>
-		<p>This process will set up permissions tables and apply row-level security to the <code>{{database}}</code> database.</p>
-		<p>If this is incorrect, please set the <code>DELEG_DATABASE</code> setting appropriately before continuing.</p>
-		<p>To continue to the next step, please click <a href="{% url 'select' %}">here</a>.</p>
+		<div class="col-md-12">
+			<h1>Set up database: Step 1</h1>
+			<p>This process will set up permissions tables and apply row-level security to the <code>{{database}}</code> database.</p>
+			<p>If this is incorrect, please set the <code>DELEG_DATABASE</code> setting appropriately before continuing.</p>
+			<p>To continue to the next step, please click <a href="{% url 'select' %}">here</a>.</p>
+		</div>
 	</body>
 </html>

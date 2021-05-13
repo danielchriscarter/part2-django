@@ -8,7 +8,8 @@ class PermissionUpdateForm(forms.Form):
         user_choices = [(u,u) for u in users]
         super().__init__(*args, **kwargs)
         self.fields['remove'] = forms.MultipleChoiceField(choices=user_choices,
-                widget=forms.CheckboxSelectMultiple, required=False)
+                widget=forms.CheckboxSelectMultiple, required=False,
+                label="Select a user to <strong>remove</strong> that user's access permissions")
 
 class FileEditForm(forms.Form):
     contents = forms.CharField()
@@ -25,4 +26,4 @@ class NewDirForm(forms.Form):
     name = forms.CharField(required=True)
 
 class SearchForm(forms.Form):
-    term = forms.CharField(required=True)
+    term = forms.CharField(required=True, label='Search term')

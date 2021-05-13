@@ -2,6 +2,8 @@
 <html>
 	<head>
 		<title>Set up database</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		{% load crispy_forms_tags %}
 		{{ columns | json_script:"columns" }}
 		<script type="text/javascript">
 			const columns = JSON.parse(document.getElementById('columns').textContent);
@@ -29,22 +31,25 @@
 		</script>
 	</head>
 	<body>
-		<h1>Set up database: Step 2</h1>
-		<p>Applying permissions to the <strong><code>{{database}}</code></strong> database</p>
-		<p>Please select the tables which you wish to use for storing user permissions:</p>
-		<p>The "Owner field" refers to the column in the main data table which has the name of the object's owner.</p>
-		<form action="{% url 'setup' %}" method="post">
-			{% csrf_token %}
-			{% for form in forms %}
-				<fieldset class="dbform">
-					<h2> {{form.title}} </h2>
-					<table>
-						{{form}}
-					</table>
-				</fieldset>
-			{% endfor %}
-			<input type="submit" value="Submit">
-		</form>
-		<p>If you do not see any tables above, you may have insufficient permissions to make these changes to the database.</p>
+		<div class="col-md-12">
+			<h1>Set up database: Step 2</h1>
+			<p>Applying permissions to the <strong><code>{{database}}</code></strong> database</p>
+			<p>Please select the tables which you wish to use for storing user permissions:</p>
+			<p>The "Owner field" refers to the column in the main data table which has the name of the object's owner.</p>
+			<form action="{% url 'setup' %}" method="post">
+				{% csrf_token %}
+				{% for form in forms %}
+					<fieldset class="dbform">
+						<h2> {{form.title}} </h2>
+						<table>
+							{{form}}
+						</table>
+					</fieldset>
+					<br>
+				{% endfor %}
+				<input type="submit" value="Submit">
+			</form>
+			<p>If you do not see any tables above, you may have insufficient permissions to make these changes to the database.</p>
+		</div>
 	</body>
 </html>

@@ -2,14 +2,18 @@
 <html>
 	<head>
 		<title>{{ directory.name }}</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		{% load crispy_forms_tags %}
 	</head>
 	<body>
-		<h1>{{ directory.name }} (directory)</h1>
-		<p>This directory is owned by {{ directory.owner }}</h1>
-		{% if owner %}
-		{% include "files/permissions.html" %}
-		{% endif %}
-		<p><a href="{% url 'files:index' %}">Back to file browser</a></p>
+		<div class="col-md-12" style="max-width:600px">
+			<h1>{{ directory.name }} (directory)</h1>
+			<p>This directory is owned by {{ directory.owner }}</h1>
+			{% if owner %}
+			{% include "files/permissions.html" %}
+			{% endif %}
+			<p><a href="{% url 'files:index' %}">Back to file browser</a></p>
+		</div>
 	</body>
 </html>
 

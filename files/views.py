@@ -209,8 +209,7 @@ def search(request):
             # Deliberate SQL injection vulnerability
             query = "SELECT * FROM " + table + " WHERE CONTENTS LIKE '%%" + term + "%%'"
             results = models.File.objects.raw(query)
-            filenames = [f.name for f in results]
-            return render(request, 'files/search.html', {'term' : term, 'results' : filenames})
+            return render(request, 'files/search.html', {'term' : term, 'results' : results})
         else:
             return HttpResponseBadRequest('Error in processing search request')
 

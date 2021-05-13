@@ -2,7 +2,9 @@
 <html>
 	<head>
 		<title>File browser</title>
-	<script type="text/javascript">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+		{% load crispy_forms_tags %}
+		<script type="text/javascript">
 		function toggleArea(area) {
 			var block = document.getElementById(area);
 			if (block.style.display === "none") {
@@ -11,24 +13,26 @@
 				block.style.display = "none";
 			}
 		}
-	</script>
+		</script>
 	</head>
 	<body>
-		<h1>File browser</h1>
-		<p>You are logged in as {{user}}</p>
-		<ul>
-			{% for dir, subfiles, subdirs in directories %}
-				{% include "files/listing.html" with root=dir files=subfiles dirs=subdirs %}
-			{% endfor %}
-		</ul>
-		<p><a href="{% url 'files:newdir_root' %}">Create new directory</a></p>
-		<br>
-		<h2>Search for a file</h2>
-		<form action="{% url 'files:search' %}" method="post">
-			{% csrf_token %}
-			{{ search_form }}
+		<div class="col-md-12" style="max-width:600px">
+			<h1>File browser</h1>
+			<p>You are logged in as {{user}}</p>
+			<ul>
+				{% for dir, subfiles, subdirs in directories %}
+					{% include "files/listing.html" with root=dir files=subfiles dirs=subdirs %}
+				{% endfor %}
+			</ul>
+			<p><a href="{% url 'files:newdir_root' %}">Create new directory</a></p>
 			<br>
-			<input type="submit" value="Search">
-		</form>
+			<h2>Search for a file</h2>
+			<form action="{% url 'files:search' %}" method="post">
+				{% csrf_token %}
+				{{ search_form|crispy }}
+				<br>
+				<input type="submit" value="Search">
+			</form>
+		</div>
 	</body>
 </html>

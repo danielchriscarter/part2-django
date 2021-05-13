@@ -37,9 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crispy_forms',
     'files',
     'managedb'
 ]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -83,7 +86,7 @@ DATABASES = {
     },
     'data': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'filedb',
+        'NAME': 'filedb2',
         # Will be filled in by middleware
         'USER': '',
 #        'USER': 'django',
